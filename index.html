@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>프롤리아 2차 투여일 계산기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      margin: 0;
+      background-color: #ffffff;
+      font-size: 20px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      font-size: 18px;
+      width: 220px;
+      max-width: 90%;
+      margin-bottom: 15px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    button {
+      display: block;
+      padding: 14px 26px;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 15px auto 0 auto;
+    }
+
+    button:hover {
+      background-color: #1f6394;
+    }
+
+    #result, #lumbarResult {
+      margin-top: 40px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #2980b9;
+      line-height: 1.6;
+    }
+
+    .black-label {
+      color: black;
+    }
+
+    .note {
+      font-size: 18px;
+      color: #e74c3c;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        font-size: 16px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      #result, #lumbarResult {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📅 프롤리아 2차 투여일 계산기</h1>
+
+  <label for="firstDate">첫 투여일을 선택하세요:</label>
+  <input type="date" id="firstDate" lang="ko">
+  <button onclick="calculateDate()">계산하기</button>
+
+  <div id="result"></div>
+
+  <hr style="margin:50px 0;">
+
+  <h1>🦴 요추 골밀도 배제 부위 계산</h1>
+  <p style="font-size:18px;">L1 ~ L4의 T-score를 입력하세요:</p>
+
+  <label for="l1">L1</label>
+  <input type="text" id="l1" placeholder="값을 입력해주세요">
+
+  <label for="l2">L2</label>
+  <input type="text" id="l2" placeholder="값을 입력해주세요">
+
+  <label for="l3">L3</label>
+  <input type="text" id="l3" placeholder="값을 입력해주세요">
+
+  <label for="l4">L4</label>
+  <input type="text" id="l4" placeholder="값을 입력해주세요">
+
+  <button onclick="calculateLumbar()">배제 부위 계산하기</button>
+
+  <div id="lumbarResult"></div>
+
+  <script>
+    // =============================
+    // 1) 프롤리아 2차 투여일 계산
+    // =============================
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}년 ${month}월 ${day}일`;
+    }
+
+    function calculateDate() {
+      const inputDate = document.getElementById('firstDate').value;
+      const resultDiv = document.getElementById('result');
+
+      if (!inputDate) {
+        resultDiv.innerText = "날짜를 먼저 선택해주세요.";
+        return;
+      }
+
+      const firstDate = new Date(inputDate + "T00:00:00");
+      const targetDate = new Date(firstDate);
+      targetDate.setDate(targetDate.getDate() + 183);
+
+      const earlyDate = new Date(targetDate);
+      earlyDate.setDate(earlyDate.getDate() - 28);
+
+      const formattedTarget = formatDate(targetDate);
+      const formattedEarly = formatDate(earlyDate);
+
+      resultDiv.innerHTML =
+        `<span class="black-label">✅ 2차 투여 예정일(183일 후):</span><br>` +
+        `<strong>${formattedTarget}</strong><br><br>` +
+        `<span class="black-label">📌 조기 투여 허용 범위<br>(최대 28일 전 투여까지 인정):</span><br>` +
+        `➡️ <strong>${formattedEarly}</strong> ~ <strong>${formattedTarget}</strong><br>` +
+        `<span class="note">❗ 단 1년에 3회 투여는 인정되지 않음</span>`;
+    }
+
+    document.getElementById('firstDate').addEventListener('input', () => {
+      document.getElementById('result').innerHTML = '';
+    });
+
+    // =============================
+    // 2) 요추 골밀도 배제 부위 계산
+    // =============================
+    function calculateLumbar() {
+      const l1 = parseFloat(document.getElementById('l1').value);
+      const l2 = parseFloat(document.getElementById('l2').value);
+      const l3 = parseFloat(document.getElementById('l3').value);
+      const l4 = parseFloat(document.getElementById('l4').value);
+      const lumbarResult = document.getElementById('lumbarResult');
+
+      if (isNaN(l1) || isNaN(l2) || isNaN(l3) || isNaN(l4)) {
+        lumbarResult.innerText = "모든 L1~L4 값을 입력해주세요.";
+        return;
+      }
+
+      const values = [l1, l2, l3, l4];
+      const labels = ["L1", "L2", "L3", "L4"];
+      let excluded = [];
+
+      for (let i = 0; i < values.length - 1; i++) {
+        const diff = Math.abs(values[i] - values[i + 1]);
+        if (diff >= 1) {
+          if (values[i] > values[i + 1]) {
+            if (!excluded.includes(labels[i])) excluded.push(labels[i]);
+          } else {
+            if (!excluded.includes(labels[i + 1])) excluded.push(labels[i + 1]);
+          }
+        }
+      }
+
+      // 배제되지 않은 부위 평균값 계산 (2개 이상일 때만)
+      const includedLabels = labels.filter((label, index) => !excluded.includes(label));
+      const includedValues = values.filter((_, index) => !excluded.includes(labels[index]));
+      let averageText = "";
+
+      if (includedValues.length >= 2) {
+        const avg = includedValues.reduce((a, b) => a + b, 0) / includedValues.length;
+        averageText = `<br>✅ <strong>${includedLabels.join(", ")}</strong>의 평균 T-score: <strong>${avg.toFixed(2)}</strong>`;
+      } else {
+        averageText = `<br>⚠ 두 부위 이상만 측정 가능`;
+      }
+
+      if (excluded.length === 0) {
+        lumbarResult.innerHTML = `✅ 배제할 부위가 없습니다.${averageText}`;
+      } else {
+        lumbarResult.innerHTML =
+          `❗ 배제 부위: <strong style="color:#e74c3c">${excluded.join(", ")}</strong>${averageText}`;
+      }
+    }
+  </script>
+
+</body>
+</html>
